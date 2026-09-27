@@ -1,0 +1,48 @@
+---
+import type { PaymentEvent, PaymentMethod, PaymentStatus } from "../lib/schema";
+import { HAPPY_PATH, formatTimestamp } from "../lib/payments/status";
+
+interface Props {
+  method: PaymentMethod;
+  status: PaymentStatus;
+  events: PaymentEvent[];
+}
+
+const { method, status, events } = Astro.props;
+const path = HAPPY_PATH[method];
+const eventByStatus = new Map(events.map((e) => [e.status, e]));
+const currentIndex = path.indexOf(status);
+
+const NEUTRAL_TITLE: Record<string, string> = {
+  INITIATED: "Payment initiated",
+  AWAITING_TRANSFER: "Waiting for bank transfer",
+  AUTHORISED: "Card authorised",
+  RECEIVED: "Payment received",
+  PROCESSING: "Processing",
+  COMPLETED: "Applied to student account",
+};
+
+// The line only ever shows the happy-path steps; DELAYED/FAILED are rendered
+// as a callout on top of wherever the payment currently sits (see the
+// tracker page), so a delayed bank transfer still shows "received" as done
+// and "processing" as not-yet, rather than losing its place in the line.
+const effectiveIndex = currentIndex >= 0 ? currentIndex : path.indexOf("AWAITING_TRANSFER");
+---
+
+<ol class="timeline">
+  {
+    path.map((step, i) => {
+      const event = eventByStatus.get(step);
+      const state = i < effectiveIndex ? "done" : i === effectiveIndex ? "current" : "future";
+      return (
+        <li class={`timeline-step timeline-${state}`}>
+          <span class="timeline-marker" aria-hidden="true">
+            {state === "done" ? "✓" : state === "current" ? "●" : "○"}
+          </span>
+          <span class="timeline-title">{NEUTRAL_TITLE[step]}</span>
+          {event && <time class="timeline-time" datetime={event.createdAt}>{formatTimestamp(event.createdAt)}</time>}
+        </li>
+      );
+    })
+  }
+</ol>

@@ -1,0 +1,44 @@
+---
+import "../../../styles.css";
+import { getDemoAccount, startPayment } from "../../../lib/payments/service";
+import { formatCents } from "../../../lib/payments/status";
+
+const { account } = getDemoAccount();
+const payment = startPayment(account.id, "CARD");
+
+if (payment.status !== "INITIATED") {
+  return Astro.redirect(`/payments/${payment.id}`, 303);
+}
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo card payment — ANU Payment Tracker</title>
+  </head>
+  <body>
+    <nav aria-label="site">
+      <a href="/">Tuition account</a>
+      <a href="/readme/">About</a>
+    </nav>
+    <main>
+      <h1>Demo card payment</h1>
+      <p class="warning">This prototype does not process real payments. No card details are collected.</p>
+      <dl class="instructions">
+        <dt>Amount</dt>
+        <dd>{formatCents(payment.amountCents, payment.currency)}</dd>
+      </dl>
+
+      <form method="post" action={`/api/payments/${payment.id}/transition`}>
+        <input type="hidden" name="action" value="authorise" />
+        <button class="cta cta-primary">Simulate successful authorisation</button>
+      </form>
+      <form method="post" action={`/api/payments/${payment.id}/transition`}>
+        <input type="hidden" name="action" value="decline" />
+        <button class="cta cta-secondary">Simulate declined card</button>
+      </form>
+    </main>
+  </body>
+</html>

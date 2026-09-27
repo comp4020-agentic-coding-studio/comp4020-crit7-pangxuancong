@@ -1,0 +1,49 @@
+---
+import "../../../styles.css";
+import { getDemoAccount, startPayment } from "../../../lib/payments/service";
+import { formatCents } from "../../../lib/payments/status";
+
+// Landing here starts (or resumes) a bank-transfer payment so the reference
+// shown is real and persisted, not a front-end placeholder — see
+// startPayment: a payment already in flight for this method is reused rather
+// than duplicated.
+const { account } = getDemoAccount();
+const payment = startPayment(account.id, "BANK_TRANSFER");
+
+if (payment.status !== "INITIATED") {
+  return Astro.redirect(`/payments/${payment.id}`, 303);
+}
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bank transfer instructions — ANU Payment Tracker</title>
+  </head>
+  <body>
+    <nav aria-label="site">
+      <a href="/">Tuition account</a>
+      <a href="/readme/">About</a>
+    </nav>
+    <main>
+      <h1>Bank transfer instructions</h1>
+      <dl class="instructions">
+        <dt>Amount</dt>
+        <dd>{formatCents(payment.amountCents, payment.currency)}</dd>
+        <dt>Bank</dt>
+        <dd>ANU Tuition Payments (demo BSB 000-000, account 00000000)</dd>
+        <dt>Reference</dt>
+        <dd class="reference">{payment.referenceCode}</dd>
+      </dl>
+      <p class="warning">You must include the reference above for your transfer to be matched to your account.</p>
+      <p>Expected processing time: usually within 1 business day.</p>
+
+      <form method="post" action={`/api/payments/${payment.id}/transition`}>
+        <input type="hidden" name="action" value="confirm-transfer" />
+        <button class="cta cta-primary">I've made the transfer</button>
+      </form>
+    </main>
+  </body>
+</html>

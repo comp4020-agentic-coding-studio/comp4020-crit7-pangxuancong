@@ -1,0 +1,69 @@
+---
+import "../../styles.css";
+import { DEMO_ACTIONS, availableActions } from "../../lib/payments/state-machine";
+import { NoActivePaymentError, getActivePayment, getDemoAccount } from "../../lib/payments/service";
+import { STATUS_COPY } from "../../lib/payments/status";
+
+const ACTION_LABEL: Record<(typeof DEMO_ACTIONS)[number], string> = {
+  receive: "Simulate bank receipt",
+  process: "Start ANU processing",
+  complete: "Complete payment",
+  delay: "Simulate delay",
+  fail: "Simulate failure",
+};
+
+const { account } = getDemoAccount();
+let payment;
+try {
+  payment = getActivePayment(account.id);
+} catch (error) {
+  if (!(error instanceof NoActivePaymentError)) throw error;
+}
+const actions = payment ? availableActions(payment.status, DEMO_ACTIONS) : [];
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo controls — ANU Payment Tracker</title>
+  </head>
+  <body>
+    <nav aria-label="site">
+      <a href="/">Tuition account</a>
+      <a href="/readme/">About</a>
+    </nav>
+    <main>
+      <p class="disclaimer">
+        Demo-only: simulates the external bank/card events this prototype can't call for real.
+      </p>
+      <h1>Demo controls</h1>
+
+      {
+        !payment && <p>No active payment. Start one from the tuition account page first.</p>
+      }
+
+      {
+        payment && (
+          <>
+            <p>
+              Current status: <strong>{payment.status}</strong> — {STATUS_COPY[payment.status].title}
+            </p>
+            <div class="demo-actions">
+              {actions.map((action) => (
+                <form method="post" action={`/api/payments/${payment.id}/transition`}>
+                  <input type="hidden" name="action" value={action} />
+                  <button>{ACTION_LABEL[action]}</button>
+                </form>
+              ))}
+            </div>
+            <p>
+              <a href={`/payments/${payment.id}`}>View tracker</a>
+            </p>
+          </>
+        )
+      }
+    </main>
+  </body>
+</html>

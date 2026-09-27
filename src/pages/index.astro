@@ -1,5 +1,13 @@
 ---
 import "../styles.css";
+import { getDemoAccount, getLatestPayment } from "../lib/payments/service";
+import { STATUS_COPY, formatCents } from "../lib/payments/status";
+
+const { account, studentName } = getDemoAccount();
+const payment = getLatestPayment(account.id);
+const isActive = payment && !["COMPLETED", "FAILED"].includes(payment.status);
+const isCompleted = payment?.status === "COMPLETED";
+const isFailed = payment?.status === "FAILED";
 ---
 
 <!doctype html>
@@ -15,8 +23,56 @@ import "../styles.css";
       <a href="/readme/">About</a>
     </nav>
     <main>
-      <h1>ANU Payment Tracker</h1>
-      <p>Tuition dashboard — under construction (Phase 4).</p>
+      <p class="disclaimer">Student prototype — not an official ANU payment service.</p>
+      <h1>Tuition account</h1>
+      <p class="student">{studentName} · {account.semester}</p>
+
+      <section class="balance-card" aria-live="polite">
+        <p class="balance-label">Outstanding balance</p>
+        <p class="balance-amount">{formatCents(account.outstandingBalanceCents, account.currency)}</p>
+        {!isCompleted && <p class="due">Due {account.dueDate}</p>}
+      </section>
+
+      {
+        isActive && payment && (
+          <section class="status-banner status-active">
+            <p>{STATUS_COPY[payment.status].title}</p>
+            <a class="cta" href={`/payments/${payment.id}`}>
+              Track payment
+            </a>
+          </section>
+        )
+      }
+
+      {
+        isCompleted && payment && (
+          <section class="status-banner status-completed">
+            <p>Payment completed</p>
+            <a class="cta" href={`/payments/${payment.id}`}>
+              View payment
+            </a>
+          </section>
+        )
+      }
+
+      {
+        isFailed && (
+          <section class="status-banner status-failed">
+            <p>Your last payment could not be completed.</p>
+            <a class="cta" href="/pay/">
+              Try another payment method
+            </a>
+          </section>
+        )
+      }
+
+      {
+        !isActive && !isCompleted && !isFailed && (
+          <a class="cta cta-primary" href="/pay/">
+            Pay tuition
+          </a>
+        )
+      }
     </main>
   </body>
 </html>

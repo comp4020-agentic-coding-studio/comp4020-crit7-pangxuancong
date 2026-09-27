@@ -2,27 +2,29 @@
 
 ## What was the breakthrough that moved the work forward?
 
-Writing the whole product down before any code. The spec named every payment
-state, which transitions were legal, and that SQLite, not the browser, was the
-truth. With that in hand, one instruction to keep building produced a working
-vertical slice. The agent wasn't guessing what "done" meant. Modelling the
-payment as an append-only event log was the part that made everything else
-fall out: once every transition writes a row, the timeline, the reload
-persistence and the demo controls are all views of the same table.
+The first version worked. Payments persisted, the state machine refused
+illegal steps, and every test passed. But when I used it, it felt dry. The
+interface was a narrow column of plain text, the timeline was symbols, and
+nothing responded when the payment moved. It technically answered "what
+happened to my payment?" without ever making me feel reassured.
 
-The second turn was admitting that working isn't good. All the tests passed
-and it still looked like coursework. Tests couldn't tell me that. Screenshots
-at three widths could, and they caught four bugs no test would have.
+The breakthrough was stepping outside the coding loop to talk that feeling
+through with ChatGPT. Putting it into words turned "it looks bland" into
+something concrete: weak hierarchy, no transaction details, no sense of what
+happens next, no feedback when the state changes. From that conversation I
+had ChatGPT produce a set of wireframes for every screen and state, plus a
+detailed redesign prompt. I then handed both to Claude with the backend
+frozen. The second version came out of that: two-column tracker, a real
+timeline, "what happens next", motion only when the status changes. Using one
+model to think about the design and another to build it gave me a much better
+result than asking a single agent to "make it look better".
 
 ## What did this work change about who I want to be as a software developer?
 
-I want to be the developer who decides what "right" looks like and how it
-will be proven, not the one who types the most code. This week my leverage
-was in the spec, in freezing the backend when I asked for a redesign, and in
-choosing the evidence: a test for behaviour, screenshots for the look, a
-machine restart for persistence.
-
-It also changed where I think a feature ends. The payment itself was never
-the hard part. What the student sees in the days afterwards is. I want to
-keep designing for the moment after the action, when the user is left
-wondering whether anything happened.
+I want a wider field of view. My first version was built from the developer's
+side: correct states, correct data. That turned out to be only one of the
+angles that matter. A student cares whether they can stop worrying about
+$18,240. An institution cares whether the service looks trustworthy and cuts
+down "did you get my payment?" enquiries. I want to be the developer who
+considers the user's experience and the organisation's needs together with
+the technical design, rather than treating correctness as the finish line.

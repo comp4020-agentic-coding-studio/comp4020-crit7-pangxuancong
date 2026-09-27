@@ -41,13 +41,23 @@ checkable line ("the core flow persists across a reload") into
 `spec/payment-tracker.test.ts`, which drives a transfer to completion over
 HTTP and re-fetches the pages.
 
-**It worked but looked like coursework.** I asked for a critique before a
-rewrite, with the backend frozen:
+**It worked but looked like coursework.** Using it, the first version felt
+dry: plain text, a timeline of symbols, no feedback when anything changed. I
+talked that through with ChatGPT, which helped me name what was missing
+(hierarchy, transaction details, "what happens next", feedback on change). I
+had it draw wireframes for every screen and state and write a redesign
+prompt. I gave both to Claude, asking for a critique before a rewrite, with
+the backend frozen:
 
 > The current UI technically works, but visually it is too simplistic and feels
 > like a basic HTML coursework prototype. DO NOT redesign the database, payment
 > state machine, routes, persistence logic, or API architecture unless
 > absolutely necessary.
+>
+> The wireframes above are not literal pixel-perfect requirements. Treat them
+> as the intended information architecture, hierarchy and density.
+
+![The ChatGPT wireframes I handed to Claude for the redesign](docs/redesign-wireframes.png)
 
 The redesign
 ([`d1a829d`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit7-pangxuancong/commit/d1a829d))

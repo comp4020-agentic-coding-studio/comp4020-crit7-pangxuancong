@@ -8,7 +8,11 @@ const title = readme.getHeadings().find((h) => h.depth === 1)?.text ?? "README";
 
 // README images are committed to public/ and linked relatively (public/x.png)
 // so they render on GitHub; here they're served from the site root.
-const html = (await readme.compiledContent()).replace(/(src|href)="public\//g, '$1="/');
+// Astro routes them through its /_image endpoint; point straight at the built
+// static file instead, so no image processing runs on the server.
+const html = (await readme.compiledContent())
+  .replace(/(src|href)="public\//g, '$1="/')
+  .replace(/src="\/_image\?href=([^&"]+)[^"]*"/g, (_, href) => `src="${decodeURIComponent(href)}"`);
 ---
 
 <AppLayout title={title} current="about" width="narrow">

@@ -1828,6 +1828,15 @@ form {
   font-size: 1.2rem;
 }
 
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-block: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
 .prose p,
 .prose ul,
 .prose ol {

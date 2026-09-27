@@ -1,0 +1,69 @@
+---
+import type { Payment } from "../lib/schema";
+import { DEMO_ACTIONS, type DemoAction, availableActions } from "../lib/payments/state-machine";
+import { STATUS_LABEL, statusTone } from "../lib/payments/presentation";
+import StatusBadge from "./StatusBadge.astro";
+
+interface Props {
+  payment?: Payment;
+}
+
+const { payment } = Astro.props;
+
+const ACTION: Record<DemoAction, { label: string; tone: string; loading: string }> = {
+  receive: { label: "Simulate bank receipt", tone: "neutral", loading: "Receiving…" },
+  process: { label: "Start ANU processing", tone: "neutral", loading: "Processing…" },
+  complete: { label: "Complete payment", tone: "success", loading: "Completing…" },
+  delay: { label: "Simulate delay", tone: "warning", loading: "Delaying…" },
+  fail: { label: "Simulate failure", tone: "danger", loading: "Failing…" },
+};
+
+const actions = payment ? availableActions(payment.status, DEMO_ACTIONS) : [];
+---
+
+<div class="demo-grid">
+  <div class="demo-state">
+    {
+      payment ? (
+        <>
+          <p class="demo-label">Current payment</p>
+          <p class="demo-ref mono">{payment.referenceCode}</p>
+          <p class="demo-label">Current backend state</p>
+          <p class="demo-status">
+            <code>{payment.status}</code>
+            <StatusBadge tone={statusTone(payment.status)} label={STATUS_LABEL[payment.status]} />
+          </p>
+        </>
+      ) : (
+        <p class="demo-empty">No payment yet. Start one from the tuition account page.</p>
+      )
+    }
+  </div>
+  <div class="demo-actions-col">
+    <p class="demo-label">Valid next transitions</p>
+    {
+      payment && actions.length > 0 ? (
+        <ul class="demo-actions">
+          {actions.map((action) => (
+            <li>
+              <form method="post" action={`/api/payments/${payment.id}/transition`}>
+                <input type="hidden" name="action" value={action} />
+                <button class={`demo-btn demo-${ACTION[action].tone}`} data-loading-label={ACTION[action].loading}>
+                  <span class="btn-label">{ACTION[action].label}</span>
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="demo-empty">
+          {payment
+            ? payment.status === "INITIATED"
+              ? "Waiting for the student to confirm the payment."
+              : "This payment is final — no further transitions."
+            : "—"}
+        </p>
+      )
+    }
+  </div>
+</div>

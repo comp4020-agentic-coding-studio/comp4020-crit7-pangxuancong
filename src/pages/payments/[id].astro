@@ -1,8 +1,14 @@
 ---
+import AppLayout from "../../layouts/AppLayout.astro";
+import Amount from "../../components/Amount.astro";
+import ContextualHelp from "../../components/ContextualHelp.astro";
+import DemoControls from "../../components/DemoControls.astro";
+import Icon from "../../components/Icon.astro";
+import PaymentDetails from "../../components/PaymentDetails.astro";
+import PaymentHero from "../../components/PaymentHero.astro";
 import PaymentTimeline from "../../components/PaymentTimeline.astro";
-import "../../styles.css";
-import { getEvents, getPayment } from "../../lib/payments/service";
-import { STATUS_COPY, formatCents, formatTimestamp } from "../../lib/payments/status";
+import { getDemoAccount, getEvents, getPayment } from "../../lib/payments/service";
+import { STATUS_LABEL, isTerminal } from "../../lib/payments/presentation";
 
 const id = Number(Astro.params.id);
 const payment = Number.isInteger(id) ? getPayment(id) : undefined;
@@ -12,72 +18,140 @@ if (!payment) {
 }
 
 const events = getEvents(payment.id);
-const copy = STATUS_COPY[payment.status];
-const methodLabel = payment.method === "BANK_TRANSFER" ? "Bank Transfer" : "Card";
+const { account } = getDemoAccount();
 const isCompleted = payment.status === "COMPLETED";
 const isFailed = payment.status === "FAILED";
-const isDelayed = payment.status === "DELAYED";
 ---
 
-<!doctype html>
-<html lang="en-AU">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Payment tracker — ANU Payment Tracker</title>
-  </head>
-  <body>
-    <nav aria-label="site">
-      <a href="/">Tuition account</a>
-      <a href="/readme/">About</a>
-    </nav>
-    <main>
-      <h1>Payment status</h1>
-      <p class="amount">{formatCents(payment.amountCents, payment.currency)}</p>
-      <p class="method">{methodLabel}</p>
-      <p class="reference">Reference: <strong>{payment.referenceCode}</strong></p>
+<AppLayout
+  title={`${payment.referenceCode} · Payment status — ANU Student Finance`}
+  current="account"
+  crumbs={[{ label: "Tuition account", href: "/" }, { label: "Payment" }, { label: payment.referenceCode }]}
+>
+  <div
+    class="tracker"
+    data-tracker
+    data-payment-id={payment.id}
+    data-status={payment.status}
+    data-status-label={STATUS_LABEL[payment.status]}
+    data-terminal={isTerminal(payment.status) ? "true" : "false"}
+  >
+    <PaymentHero payment={payment} events={events} />
 
-      <section
-        class:list={[
-          "status-card",
-          isCompleted && "status-completed",
-          isFailed && "status-failed",
-          isDelayed && "status-delayed",
-        ]}
-        aria-live="polite"
-      >
-        <h2>{copy.title}</h2>
-        <p>{copy.description}</p>
-        {!isCompleted && !isFailed && <p class="no-action">No action is required right now.</p>}
-      </section>
+    {
+      isCompleted && (
+        <section class="impact" aria-labelledby="impact-title">
+          <span class="impact-icon" aria-hidden="true">
+            <Icon name="wallet" size={20} />
+          </span>
+          <div>
+            <h2 id="impact-title" class="impact-label">Outstanding balance</h2>
+            <p class="impact-amount">
+              <Amount cents={account.outstandingBalanceCents} currency={account.currency} />
+            </p>
+          </div>
+          <p class="impact-note">Your {account.semester} tuition is fully paid.</p>
+        </section>
+      )
+    }
 
-      <PaymentTimeline method={payment.method} status={payment.status} events={events} />
+    <div class="tracker-grid">
+      <div class="tracker-main">
+        <section class="panel" aria-labelledby="timeline-title">
+          <h2 id="timeline-title" class="panel-title">Progress</h2>
+          <PaymentTimeline payment={payment} events={events} />
+        </section>
 
-      {
-        !isCompleted && !isFailed && (
-          <p class="estimate">
-            Estimated processing: usually within 1 business day.
-            <br />
-            Last updated: {formatTimestamp(payment.updatedAt)}
-          </p>
-        )
+        <ContextualHelp payment={payment}>
+          {
+            isFailed && (
+              <div class="help-actions">
+                <a class="btn btn-danger" href="/pay/">
+                  Try another payment method
+                </a>
+                <a class="btn-link" href="/">
+                  Back to tuition account
+                </a>
+              </div>
+            )
+          }
+        </ContextualHelp>
+      </div>
+
+      <aside class="tracker-side" aria-label="Payment information">
+        <PaymentDetails payment={payment} />
+        <p class="side-link">
+          <a class="btn-link" href="/"><Icon name="arrow-left" size={16} />Back to tuition account</a>
+        </p>
+      </aside>
+    </div>
+
+    <div class="toast" role="status" aria-live="polite" data-toast></div>
+  </div>
+
+  <aside slot="outside" class="devpanel" aria-label="Prototype controls">
+    <details data-devpanel>
+      <summary>
+        <Icon name="flask" size={16} />
+        <span>Prototype controls</span>
+        <code class="devpanel-state">{payment.status}</code>
+      </summary>
+      <div class="devpanel-body">
+        <p class="devpanel-sub">Simulate external banking events. Each action writes to the real database.</p>
+        <DemoControls payment={payment} />
+      </div>
+    </details>
+  </aside>
+</AppLayout>
+
+<script>
+  const root = document.querySelector<HTMLElement>("[data-tracker]");
+  if (root) {
+    const { paymentId, status, statusLabel, terminal } = root.dataset;
+    const key = `anu-tracker:${paymentId}`;
+    let previous: string | null = null;
+    try {
+      previous = sessionStorage.getItem(key);
+      sessionStorage.setItem(key, status ?? "");
+    } catch {}
+
+    // Animate only a real change since this tab last saw the payment, so a
+    // plain refresh stays still and a demo transition is visibly answered.
+    if (previous && previous !== status) {
+      root.classList.add("is-transitioning");
+      const toast = root.querySelector<HTMLElement>("[data-toast]");
+      if (toast) {
+        toast.textContent = `Status updated · ${statusLabel}`;
+        toast.classList.add("is-visible");
+        setTimeout(() => toast.classList.remove("is-visible"), 3200);
       }
+    }
 
-      {
-        isCompleted && (
-          <p class="balance-note">Outstanding balance: {formatCents(0, payment.currency)}</p>
-        )
-      }
+    const panel = document.querySelector<HTMLDetailsElement>("[data-devpanel]");
+    if (panel) {
+      try {
+        // A final payment has nothing left to simulate, so don't cover it.
+        panel.open = terminal !== "true" && sessionStorage.getItem("anu-devpanel") === "open";
+      } catch {}
+      panel.addEventListener("toggle", () => {
+        try {
+          sessionStorage.setItem("anu-devpanel", panel.open ? "open" : "closed");
+        } catch {}
+      });
+    }
 
-      {
-        isFailed && (
-          <a class="cta cta-primary" href="/pay/">
-            Try another payment method
-          </a>
-        )
-      }
-
-      <p><a href="/">Back to tuition account</a></p>
-    </main>
-  </body>
-</html>
+    // A transition made from another window (the /demo page) reaches this
+    // tab too.
+    if (terminal !== "true") {
+      const poll = async () => {
+        try {
+          const res = await fetch(`/api/payments/${paymentId}/status`, { cache: "no-store" });
+          if (res.ok && (await res.json()).status !== status) location.reload();
+        } catch {}
+      };
+      setInterval(() => {
+        if (document.visibilityState === "visible") poll();
+      }, 3000);
+    }
+  }
+</script>

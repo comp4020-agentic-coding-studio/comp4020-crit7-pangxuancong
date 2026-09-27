@@ -1,0 +1,51 @@
+---
+import type { Payment } from "../lib/schema";
+import {
+  METHOD_LABEL,
+  STATUS_LABEL,
+  formatDateTime,
+  statusTone,
+} from "../lib/payments/presentation";
+import Amount from "./Amount.astro";
+import CopyButton from "./CopyButton.astro";
+import StatusBadge from "./StatusBadge.astro";
+
+interface Props {
+  payment: Payment;
+}
+
+const { payment } = Astro.props;
+---
+
+<section class="panel details" aria-labelledby="details-title">
+  <h2 id="details-title" class="panel-title">Payment details</h2>
+  <dl class="detail-list">
+    <div>
+      <dt>Amount</dt>
+      <dd><Amount cents={payment.amountCents} currency={payment.currency} /></dd>
+    </div>
+    <div>
+      <dt>Payment method</dt>
+      <dd>{METHOD_LABEL[payment.method]}</dd>
+    </div>
+    <div>
+      <dt>Payment reference</dt>
+      <dd class="detail-ref">
+        <span class="mono">{payment.referenceCode}</span>
+        <CopyButton value={payment.referenceCode} />
+      </dd>
+    </div>
+    <div>
+      <dt>Payment created</dt>
+      <dd>{formatDateTime(payment.createdAt)}</dd>
+    </div>
+    <div>
+      <dt>Last updated</dt>
+      <dd>{formatDateTime(payment.updatedAt)}</dd>
+    </div>
+    <div>
+      <dt>Status</dt>
+      <dd><StatusBadge tone={statusTone(payment.status)} label={STATUS_LABEL[payment.status]} /></dd>
+    </div>
+  </dl>
+</section>

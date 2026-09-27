@@ -1,0 +1,92 @@
+---
+import "../styles.css";
+import Icon from "../components/Icon.astro";
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  title: string;
+  crumbs?: Crumb[];
+  current?: "account" | "demo" | "about";
+  width?: "wide" | "narrow";
+}
+
+const { title, crumbs, current, width = "wide" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="app-header">
+      <div class="shell app-header-inner">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">ANU</span>
+          <span class="brand-divider" aria-hidden="true"></span>
+          <span class="brand-product">Student Finance</span>
+        </a>
+        <nav class="app-nav" aria-label="Primary">
+          <a href="/" aria-current={current === "account" ? "page" : undefined}>Tuition account</a>
+          <a href="/demo/" aria-current={current === "demo" ? "page" : undefined}><span class="nav-long">Prototype controls</span><span class="nav-short">Demo</span></a>
+          <a href="/readme/" aria-current={current === "about" ? "page" : undefined}>About</a>
+          <span class="app-user" aria-hidden="true"><Icon name="user" size={16} /></span>
+        </nav>
+      </div>
+    </header>
+
+    {
+      crumbs && crumbs.length > 0 && (
+        <nav class="shell breadcrumbs" aria-label="Breadcrumb">
+          <ol>
+            {crumbs.map((c, i) => (
+              <li>
+                {c.href && i < crumbs.length - 1 ? (
+                  <a href={c.href}>{c.label}</a>
+                ) : (
+                  <span aria-current={i === crumbs.length - 1 ? "page" : undefined}>{c.label}</span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+
+    <main id="content" class:list={["shell", "page", width === "narrow" && "page-narrow"]}>
+      <slot />
+    </main>
+
+    <slot name="outside" />
+
+    <footer class="app-footer">
+      <div class="shell">
+        Student prototype — not an official ANU payment service. No real payments are processed.
+      </div>
+    </footer>
+
+    <script>
+      // Pressed/loading feedback for every server-bound form: the button says
+      // what's happening instead of the page just freezing until the redirect.
+      document.addEventListener("submit", (event) => {
+        const form = event.target as HTMLFormElement;
+        const button = (event.submitter ?? form.querySelector("button")) as HTMLButtonElement | null;
+        if (!button || (form.getAttribute("method") ?? "get").toLowerCase() !== "post") return;
+        button.setAttribute("aria-busy", "true");
+        button.classList.add("is-loading");
+        const label = button.dataset.loadingLabel;
+        const text = button.querySelector(".btn-label");
+        if (label && text) text.textContent = label;
+        setTimeout(() => (button.disabled = true));
+      });
+    </script>
+  </body>
+</html>

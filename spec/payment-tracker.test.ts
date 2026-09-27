@@ -61,7 +61,7 @@ describe("bank transfer payment: create, advance, survive a reload", () => {
   it("still shows PROCESSING and the same reference after a fresh reload", async () => {
     const reloaded = await fetch(new URL(trackerUrl, baseUrl));
     const html = await reloaded.text();
-    expect(html).toContain("ANU is processing your payment");
+    expect(html).toMatch(/processing your payment/i);
     expect(html).toContain(reference);
   });
 

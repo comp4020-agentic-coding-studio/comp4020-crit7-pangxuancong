@@ -61,7 +61,14 @@ export function startPayment(accountId: number, method: PaymentMethod): Payment 
   // landing on /pay/bank or /pay/card while one is already in flight resumes
   // it instead of starting a second, concurrent payment.
   const existing = getLatestPayment(accountId);
-  if (existing && !TERMINAL.has(existing.status)) return existing;
+  if (existing && !TERMINAL.has(existing.status)) {
+    // Nothing has happened yet on an INITIATED payment, so changing your mind
+    // about the method just switches it rather than showing the wrong flow.
+    if (existing.status === "INITIATED" && existing.method !== method) {
+      return db.update(payments).set({ method }).where(eq(payments.id, existing.id)).returning().get();
+    }
+    return existing;
+  }
 
   const account = db.select().from(studentAccounts).where(eq(studentAccounts.id, accountId)).get();
   if (!account) throw new Error(`No account ${accountId}`);
@@ -90,6 +97,16 @@ export function startPayment(accountId: number, method: PaymentMethod): Payment 
     }
   }
   throw new Error("unreachable");
+}
+
+export function listPayments(accountId: number, limit = 5): Payment[] {
+  return db
+    .select()
+    .from(payments)
+    .where(eq(payments.accountId, accountId))
+    .orderBy(desc(payments.id))
+    .limit(limit)
+    .all();
 }
 
 export function getPayment(id: number): Payment | undefined {

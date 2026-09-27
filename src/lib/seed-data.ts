@@ -1,5 +1,5 @@
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import { studentAccounts, students } from "./schema";
+import { studentAccounts, students } from "./schema.ts";
 
 const DEMO_STUDENT = { name: "Alex Student", studentNumber: "u7654321" };
 const DEMO_ACCOUNT = {

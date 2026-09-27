@@ -1,0 +1,34 @@
+---
+import type { IconName } from "../lib/icons";
+import type { Tone } from "../lib/payments/presentation";
+import Icon from "./Icon.astro";
+
+interface Props {
+  tone: Tone;
+  icon: IconName;
+  size?: "lg" | "md";
+}
+
+const { tone, icon, size = "lg" } = Astro.props;
+---
+
+<div class:list={["status-indicator", `si-${tone}`, `si-${size}`]} aria-hidden="true">
+  {
+    tone === "success" ? (
+      <svg class="si-success" viewBox="0 0 56 56">
+        <circle class="si-success-disc" cx="28" cy="28" r="26" />
+        <path class="si-check" d="M18 28.5l6.5 6.5L38 21.5" />
+      </svg>
+    ) : (
+      <>
+        <svg class="si-ring" viewBox="0 0 56 56">
+          <circle class="si-track" cx="28" cy="28" r="25" />
+          {tone === "progress" && <circle class="si-arc" cx="28" cy="28" r="25" pathLength="100" />}
+        </svg>
+        <span class="si-icon">
+          <Icon name={icon} size={size === "lg" ? 24 : 18} />
+        </span>
+      </>
+    )
+  }
+</div>

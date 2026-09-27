@@ -1,0 +1,13 @@
+---
+import { formatCents } from "../lib/payments/status";
+
+interface Props {
+  cents: number;
+  currency?: string;
+  class?: string;
+}
+
+const { cents, currency = "AUD", class: className } = Astro.props;
+---
+
+<span class:list={["amount", className]}>{formatCents(cents, currency)}<span class="amount-currency">{currency}</span></span>

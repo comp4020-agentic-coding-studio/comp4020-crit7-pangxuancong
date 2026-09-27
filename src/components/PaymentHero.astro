@@ -1,0 +1,46 @@
+---
+import type { Payment, PaymentEvent } from "../lib/schema";
+import {
+  METHOD_ICON,
+  METHOD_LABEL,
+  formatDateTime,
+  heroCopy,
+  statusTone,
+} from "../lib/payments/presentation";
+import Amount from "./Amount.astro";
+import Icon from "./Icon.astro";
+import StatusIndicator from "./StatusIndicator.astro";
+
+interface Props {
+  payment: Payment;
+  events: PaymentEvent[];
+}
+
+const { payment, events } = Astro.props;
+const tone = statusTone(payment.status);
+const copy = heroCopy(payment, events);
+const indicatorIcon =
+  tone === "warning" ? "clock" : tone === "danger" ? "x" : METHOD_ICON[payment.method];
+---
+
+<section class={`hero hero-${tone}`} aria-labelledby="hero-title">
+  <StatusIndicator tone={tone} icon={indicatorIcon} />
+  <div class="hero-text">
+    <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Payment status</p>
+    <h1 id="hero-title">{copy.title}</h1>
+    <p class="hero-description">{copy.description}</p>
+    <ul class="meta-row" aria-label="Payment summary">
+      <li class="meta-amount"><Amount cents={payment.amountCents} currency={payment.currency} /></li>
+      <li><Icon name={METHOD_ICON[payment.method]} size={16} />{METHOD_LABEL[payment.method]}</li>
+      <li class="mono">{payment.referenceCode}</li>
+    </ul>
+    {
+      payment.completedAt && (
+        <p class="hero-completed">
+          <Icon name="clock" size={15} />
+          Completed {formatDateTime(payment.completedAt)}
+        </p>
+      )
+    }
+  </div>
+</section>

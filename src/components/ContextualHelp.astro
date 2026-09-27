@@ -1,0 +1,24 @@
+---
+import type { Payment } from "../lib/schema";
+import { nextSteps } from "../lib/payments/presentation";
+import Icon from "./Icon.astro";
+
+interface Props {
+  payment: Payment;
+}
+
+const { payment } = Astro.props;
+const help = nextSteps(payment);
+const icon = help.tone === "warning" ? "warning" : help.tone === "danger" ? "warning" : help.tone === "success" ? "shield" : "info";
+---
+
+<section class={`help help-${help.tone}`} aria-labelledby="help-title">
+  <span class="help-icon" aria-hidden="true"><Icon name={icon} size={18} /></span>
+  <div class="help-body">
+    <h2 id="help-title" class="help-title">{help.title}</h2>
+    <ul class="help-lines">
+      {help.lines.map((line) => <li>{line}</li>)}
+    </ul>
+    <slot />
+  </div>
+</section>

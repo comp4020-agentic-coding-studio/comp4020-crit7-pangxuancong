@@ -38,6 +38,7 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
     throw error;
   }
 
-  const redirectTo = request.headers.get("referer")?.includes("/demo") ? "/demo/" : `/payments/${id}`;
-  return redirect(redirectTo, 303);
+  // Always land on the student-facing tracker, so a demo click is visibly
+  // answered by the UI the student sees (the tracker animates the change).
+  return redirect(`/payments/${id}`, 303);
 };

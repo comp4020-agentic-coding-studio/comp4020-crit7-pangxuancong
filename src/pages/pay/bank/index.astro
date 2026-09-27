@@ -1,12 +1,13 @@
 ---
-import "../../../styles.css";
+import AppLayout from "../../../layouts/AppLayout.astro";
+import Amount from "../../../components/Amount.astro";
+import CopyButton from "../../../components/CopyButton.astro";
+import Icon from "../../../components/Icon.astro";
 import { getDemoAccount, startPayment } from "../../../lib/payments/service";
-import { formatCents } from "../../../lib/payments/status";
 
 // Landing here starts (or resumes) a bank-transfer payment so the reference
 // shown is real and persisted, not a front-end placeholder — see
-// startPayment: a payment already in flight for this method is reused rather
-// than duplicated.
+// startPayment: a payment already in flight is reused rather than duplicated.
 const { account } = getDemoAccount();
 const payment = startPayment(account.id, "BANK_TRANSFER");
 
@@ -15,35 +16,62 @@ if (payment.status !== "INITIATED") {
 }
 ---
 
-<!doctype html>
-<html lang="en-AU">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bank transfer instructions — ANU Payment Tracker</title>
-  </head>
-  <body>
-    <nav aria-label="site">
-      <a href="/">Tuition account</a>
-      <a href="/readme/">About</a>
-    </nav>
-    <main>
-      <h1>Bank transfer instructions</h1>
-      <dl class="instructions">
-        <dt>Amount</dt>
-        <dd>{formatCents(payment.amountCents, payment.currency)}</dd>
-        <dt>Bank</dt>
-        <dd>ANU Tuition Payments (demo BSB 000-000, account 00000000)</dd>
-        <dt>Reference</dt>
-        <dd class="reference">{payment.referenceCode}</dd>
-      </dl>
-      <p class="warning">You must include the reference above for your transfer to be matched to your account.</p>
-      <p>Expected processing time: usually within 1 business day.</p>
+<AppLayout
+  title="Pay by bank transfer — ANU Student Finance"
+  current="account"
+  width="narrow"
+  crumbs={[{ label: "Tuition account", href: "/" }, { label: "Pay tuition", href: "/pay/" }, { label: "Bank transfer" }]}
+>
+  <header class="page-head">
+    <h1>Pay by bank transfer</h1>
+    <p class="page-sub">Transfer the exact amount below using the payment reference provided.</p>
+  </header>
 
-      <form method="post" action={`/api/payments/${payment.id}/transition`}>
-        <input type="hidden" name="action" value="confirm-transfer" />
-        <button class="cta cta-primary">I've made the transfer</button>
-      </form>
-    </main>
-  </body>
-</html>
+  <section class="panel transfer" aria-label="Transfer details">
+    <div class="transfer-grid">
+      <div class="transfer-amount">
+        <p class="label">Payment amount</p>
+        <p class="transfer-figure"><Amount cents={payment.amountCents} currency={payment.currency} /></p>
+      </div>
+      <dl class="transfer-bank">
+        <div>
+          <dt>Account name</dt>
+          <dd>ANU Tuition Payments (demo)</dd>
+        </div>
+        <div>
+          <dt>BSB</dt>
+          <dd class="mono">000-000</dd>
+        </div>
+        <div>
+          <dt>Account number</dt>
+          <dd class="mono">12345678</dd>
+        </div>
+      </dl>
+    </div>
+    <div class="transfer-ref">
+      <div>
+        <p class="label">Payment reference</p>
+        <p class="transfer-ref-code mono">{payment.referenceCode}</p>
+      </div>
+      <CopyButton value={payment.referenceCode} />
+    </div>
+  </section>
+
+  <p class="notice notice-warning">
+    <Icon name="warning" size={18} />
+    <span><strong>Important.</strong> Include this reference exactly so your transfer can be matched to your account.</span>
+  </p>
+
+  <p class="notice notice-plain">
+    <Icon name="clock" size={18} />
+    <span><strong>Expected processing time.</strong> 1–2 business days after your bank sends the transfer.</span>
+  </p>
+
+  <form method="post" action={`/api/payments/${payment.id}/transition`}>
+    <input type="hidden" name="action" value="confirm-transfer" />
+    <button class="btn btn-primary btn-block" data-loading-label="Recording your transfer…">
+      <span class="btn-label">I've made the transfer</span>
+    </button>
+  </form>
+  <p class="center-link"><a class="btn-link" href="/">Back to tuition account</a></p>
+</AppLayout>

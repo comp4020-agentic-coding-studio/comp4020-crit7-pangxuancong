@@ -1,7 +1,8 @@
 ---
-import "../../../styles.css";
+import AppLayout from "../../../layouts/AppLayout.astro";
+import Amount from "../../../components/Amount.astro";
+import Icon from "../../../components/Icon.astro";
 import { getDemoAccount, startPayment } from "../../../lib/payments/service";
-import { formatCents } from "../../../lib/payments/status";
 
 const { account } = getDemoAccount();
 const payment = startPayment(account.id, "CARD");
@@ -11,34 +12,54 @@ if (payment.status !== "INITIATED") {
 }
 ---
 
-<!doctype html>
-<html lang="en-AU">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Demo card payment — ANU Payment Tracker</title>
-  </head>
-  <body>
-    <nav aria-label="site">
-      <a href="/">Tuition account</a>
-      <a href="/readme/">About</a>
-    </nav>
-    <main>
-      <h1>Demo card payment</h1>
-      <p class="warning">This prototype does not process real payments. No card details are collected.</p>
-      <dl class="instructions">
-        <dt>Amount</dt>
-        <dd>{formatCents(payment.amountCents, payment.currency)}</dd>
-      </dl>
+<AppLayout
+  title="Card payment — ANU Student Finance"
+  current="account"
+  width="narrow"
+  crumbs={[{ label: "Tuition account", href: "/" }, { label: "Pay tuition", href: "/pay/" }, { label: "Card payment" }]}
+>
+  <header class="page-head">
+    <h1>Card payment</h1>
+    <p class="page-sub">This prototype simulates the card network — no card details are collected.</p>
+  </header>
 
-      <form method="post" action={`/api/payments/${payment.id}/transition`}>
-        <input type="hidden" name="action" value="authorise" />
-        <button class="cta cta-primary">Simulate successful authorisation</button>
-      </form>
-      <form method="post" action={`/api/payments/${payment.id}/transition`}>
-        <input type="hidden" name="action" value="decline" />
-        <button class="cta cta-secondary">Simulate declined card</button>
-      </form>
-    </main>
-  </body>
-</html>
+  <section class="panel transfer" aria-label="Card payment summary">
+    <div class="transfer-grid">
+      <div class="transfer-amount">
+        <p class="label">Payment amount</p>
+        <p class="transfer-figure"><Amount cents={payment.amountCents} currency={payment.currency} /></p>
+      </div>
+      <dl class="transfer-bank">
+        <div>
+          <dt>Payment reference</dt>
+          <dd class="mono">{payment.referenceCode}</dd>
+        </div>
+        <div>
+          <dt>Card</dt>
+          <dd>Demo card •••• 4242</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <p class="notice notice-plain">
+    <Icon name="lock" size={18} />
+    <span>Choose an outcome to simulate what the card network would return.</span>
+  </p>
+
+  <div class="card-actions">
+    <form method="post" action={`/api/payments/${payment.id}/transition`}>
+      <input type="hidden" name="action" value="authorise" />
+      <button class="btn btn-primary btn-block" data-loading-label="Authorising…">
+        <span class="btn-label">Simulate successful authorisation</span>
+      </button>
+    </form>
+    <form method="post" action={`/api/payments/${payment.id}/transition`}>
+      <input type="hidden" name="action" value="decline" />
+      <button class="btn btn-secondary btn-block" data-loading-label="Declining…">
+        <span class="btn-label">Simulate declined card</span>
+      </button>
+    </form>
+  </div>
+  <p class="center-link"><a class="btn-link" href="/pay/">Choose a different method</a></p>
+</AppLayout>

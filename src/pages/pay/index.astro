@@ -1,31 +1,54 @@
 ---
-import "../../styles.css";
+import AppLayout from "../../layouts/AppLayout.astro";
+import Icon from "../../components/Icon.astro";
 ---
 
-<!doctype html>
-<html lang="en-AU">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Choose payment method — ANU Payment Tracker</title>
-  </head>
-  <body>
-    <nav aria-label="site">
-      <a href="/">Tuition account</a>
-      <a href="/readme/">About</a>
-    </nav>
-    <main>
-      <h1>Choose payment method</h1>
-      <div class="method-grid">
-        <a class="method-card" href="/pay/bank/">
-          <h2>Bank Transfer</h2>
-          <p>Transfer from your bank using a unique payment reference. Processing may take time.</p>
-        </a>
-        <a class="method-card" href="/pay/card/">
-          <h2>Card Payment</h2>
-          <p>Simulated card payment for this prototype — no real card is processed.</p>
-        </a>
-      </div>
-    </main>
-  </body>
-</html>
+<AppLayout
+  title="Choose a payment method — ANU Student Finance"
+  current="account"
+  width="narrow"
+  crumbs={[{ label: "Tuition account", href: "/" }, { label: "Pay tuition" }]}
+>
+  <header class="page-head">
+    <h1>Choose a payment method</h1>
+    <p class="page-sub">Select how you would like to pay your tuition fees.</p>
+  </header>
+
+  <form class="method-form" method="get" action="/pay/start">
+    <fieldset>
+      <legend class="visually-hidden">Payment method</legend>
+
+      <label class="method-option">
+        <input type="radio" name="method" value="bank" checked />
+        <span class="method-option-icon" aria-hidden="true"><Icon name="bank" size={22} /></span>
+        <span class="method-option-body">
+          <span class="method-option-title">Bank transfer</span>
+          <span class="method-option-text">Transfer from your bank using a unique payment reference.</span>
+          <span class="method-option-facts">
+            <span><Icon name="clock" size={14} />Usually 1–2 business days</span>
+            <span><Icon name="check" size={14} />No additional fees</span>
+          </span>
+        </span>
+        <span class="method-option-radio" aria-hidden="true"></span>
+      </label>
+
+      <label class="method-option">
+        <input type="radio" name="method" value="card" />
+        <span class="method-option-icon" aria-hidden="true"><Icon name="card" size={22} /></span>
+        <span class="method-option-body">
+          <span class="method-option-title">Card payment</span>
+          <span class="method-option-text">Simulated card payment for this prototype.</span>
+          <span class="method-option-facts">
+            <span><Icon name="clock" size={14} />Processed immediately (simulated)</span>
+            <span><Icon name="lock" size={14} />No real card details required</span>
+          </span>
+        </span>
+        <span class="method-option-radio" aria-hidden="true"></span>
+      </label>
+    </fieldset>
+
+    <button class="btn btn-primary btn-block">
+      <span class="btn-label">Continue</span>
+    </button>
+  </form>
+</AppLayout>

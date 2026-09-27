@@ -1,0 +1,37 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+  value: string;
+  label?: string;
+}
+
+const { value, label = "Copy" } = Astro.props;
+---
+
+<button type="button" class="copy-btn" data-copy={value} aria-label={`Copy ${value}`}>
+  <Icon name="copy" size={15} />
+  <span class="copy-label" data-copy-label>{label}</span>
+</button>
+
+<script>
+  document.addEventListener("click", async (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>("[data-copy]");
+    if (!button) return;
+    const label = button.querySelector("[data-copy-label]");
+    const original = label?.textContent ?? "";
+    try {
+      await navigator.clipboard.writeText(button.dataset.copy ?? "");
+      button.classList.add("is-copied");
+      if (label) label.textContent = "Copied";
+      button.setAttribute("aria-label", "Copied to clipboard");
+    } catch {
+      if (label) label.textContent = "Copy failed";
+    }
+    setTimeout(() => {
+      button.classList.remove("is-copied");
+      if (label) label.textContent = original;
+      button.setAttribute("aria-label", `Copy ${button.dataset.copy}`);
+    }, 1800);
+  });
+</script>

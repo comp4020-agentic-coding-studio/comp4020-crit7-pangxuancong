@@ -1,48 +1,48 @@
 ---
-import type { PaymentEvent, PaymentMethod, PaymentStatus } from "../lib/schema";
-import { HAPPY_PATH, formatTimestamp } from "../lib/payments/status";
+import type { Payment, PaymentEvent } from "../lib/schema";
+import { buildTimeline, formatDateTime, toIso } from "../lib/payments/presentation";
+import Icon from "./Icon.astro";
 
 interface Props {
-  method: PaymentMethod;
-  status: PaymentStatus;
+  payment: Payment;
   events: PaymentEvent[];
 }
 
-const { method, status, events } = Astro.props;
-const path = HAPPY_PATH[method];
-const eventByStatus = new Map(events.map((e) => [e.status, e]));
-const currentIndex = path.indexOf(status);
-
-const NEUTRAL_TITLE: Record<string, string> = {
-  INITIATED: "Payment initiated",
-  AWAITING_TRANSFER: "Waiting for bank transfer",
-  AUTHORISED: "Card authorised",
-  RECEIVED: "Payment received",
-  PROCESSING: "Processing",
-  COMPLETED: "Applied to student account",
-};
-
-// The line only ever shows the happy-path steps; DELAYED/FAILED are rendered
-// as a callout on top of wherever the payment currently sits (see the
-// tracker page), so a delayed bank transfer still shows "received" as done
-// and "processing" as not-yet, rather than losing its place in the line.
-const effectiveIndex = currentIndex >= 0 ? currentIndex : path.indexOf("AWAITING_TRANSFER");
+const { payment, events } = Astro.props;
+const items = buildTimeline(payment, events);
+const STATE_LABEL = {
+  done: "Completed",
+  current: "In progress",
+  future: "Not started",
+  warning: "Delayed",
+  failed: "Failed",
+} as const;
 ---
 
 <ol class="timeline">
   {
-    path.map((step, i) => {
-      const event = eventByStatus.get(step);
-      const state = i < effectiveIndex ? "done" : i === effectiveIndex ? "current" : "future";
-      return (
-        <li class={`timeline-step timeline-${state}`}>
-          <span class="timeline-marker" aria-hidden="true">
-            {state === "done" ? "✓" : state === "current" ? "●" : "○"}
-          </span>
-          <span class="timeline-title">{NEUTRAL_TITLE[step]}</span>
-          {event && <time class="timeline-time" datetime={event.createdAt}>{formatTimestamp(event.createdAt)}</time>}
-        </li>
-      );
-    })
+    items.map((item) => (
+      <li class={`tl-item tl-${item.state}`} data-latest={item.latest ? "" : undefined}>
+        <span class="tl-node" aria-hidden="true">
+          {item.state === "done" && <Icon name="check" size={14} />}
+          {item.state === "warning" && <Icon name="clock" size={14} />}
+          {item.state === "failed" && <Icon name="x" size={14} />}
+          {item.state === "current" && <span class="tl-dot" />}
+        </span>
+        <span class="tl-connector" aria-hidden="true" />
+        <div class="tl-body">
+          <p class="tl-title">
+            {item.title}
+            <span class="visually-hidden"> — {STATE_LABEL[item.state]}</span>
+          </p>
+          {item.time && (
+            <time class="tl-time" datetime={toIso(item.time)}>
+              {formatDateTime(item.time)}
+            </time>
+          )}
+          {item.description && <p class="tl-description">{item.description}</p>}
+        </div>
+      </li>
+    ))
   }
 </ol>

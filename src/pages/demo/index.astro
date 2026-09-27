@@ -1,69 +1,34 @@
 ---
-import "../../styles.css";
-import { DEMO_ACTIONS, availableActions } from "../../lib/payments/state-machine";
-import { NoActivePaymentError, getActivePayment, getDemoAccount } from "../../lib/payments/service";
-import { STATUS_COPY } from "../../lib/payments/status";
-
-const ACTION_LABEL: Record<(typeof DEMO_ACTIONS)[number], string> = {
-  receive: "Simulate bank receipt",
-  process: "Start ANU processing",
-  complete: "Complete payment",
-  delay: "Simulate delay",
-  fail: "Simulate failure",
-};
+import AppLayout from "../../layouts/AppLayout.astro";
+import DemoControls from "../../components/DemoControls.astro";
+import Icon from "../../components/Icon.astro";
+import { getDemoAccount, getLatestPayment } from "../../lib/payments/service";
 
 const { account } = getDemoAccount();
-let payment;
-try {
-  payment = getActivePayment(account.id);
-} catch (error) {
-  if (!(error instanceof NoActivePaymentError)) throw error;
-}
-const actions = payment ? availableActions(payment.status, DEMO_ACTIONS) : [];
+const payment = getLatestPayment(account.id);
 ---
 
-<!doctype html>
-<html lang="en-AU">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Demo controls — ANU Payment Tracker</title>
-  </head>
-  <body>
-    <nav aria-label="site">
-      <a href="/">Tuition account</a>
-      <a href="/readme/">About</a>
-    </nav>
-    <main>
-      <p class="disclaimer">
-        Demo-only: simulates the external bank/card events this prototype can't call for real.
-      </p>
-      <h1>Demo controls</h1>
+<AppLayout title="Prototype controls — ANU Student Finance" current="demo">
+  <section class="devsurface" aria-labelledby="demo-title">
+    <header class="devsurface-head">
+      <span class="devsurface-icon" aria-hidden="true"><Icon name="flask" size={22} /></span>
+      <div>
+        <h1 id="demo-title">Prototype controls</h1>
+        <p>Simulate external banking events for the Crit demonstration. These stand in for the bank/card webhooks a real system would receive.</p>
+      </div>
+    </header>
 
-      {
-        !payment && <p>No active payment. Start one from the tuition account page first.</p>
-      }
+    <DemoControls payment={payment} />
 
+    <footer class="devsurface-foot">
+      <p>These actions update the real database. Each one redirects to the student's tracker so you can watch it respond.</p>
       {
         payment && (
-          <>
-            <p>
-              Current status: <strong>{payment.status}</strong> — {STATUS_COPY[payment.status].title}
-            </p>
-            <div class="demo-actions">
-              {actions.map((action) => (
-                <form method="post" action={`/api/payments/${payment.id}/transition`}>
-                  <input type="hidden" name="action" value={action} />
-                  <button>{ACTION_LABEL[action]}</button>
-                </form>
-              ))}
-            </div>
-            <p>
-              <a href={`/payments/${payment.id}`}>View tracker</a>
-            </p>
-          </>
+          <a class="btn btn-ghost-dark" href={`/payments/${payment.id}`}>
+            View tracker <Icon name="arrow-right" size={16} />
+          </a>
         )
       }
-    </main>
-  </body>
-</html>
+    </footer>
+  </section>
+</AppLayout>

@@ -77,4 +77,15 @@ describe("bank transfer payment: create, advance, survive a reload", () => {
     const res = await postAction(transitionUrl, "process");
     expect(res.status).toBe(409);
   });
+
+  it("the demo reset restores the unpaid account with no payments", async () => {
+    const res = await fetch(new URL("/api/demo/reset", baseUrl), {
+      method: "POST",
+      headers: { origin: baseUrl },
+    });
+    expect(res.url).toBe(new URL("/", baseUrl).href);
+    const html = await res.text();
+    expect(html).toContain("$18,240.00");
+    expect(html).toContain("No payments yet");
+  });
 });

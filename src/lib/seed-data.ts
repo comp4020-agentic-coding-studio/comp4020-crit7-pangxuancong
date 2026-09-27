@@ -1,5 +1,5 @@
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import { studentAccounts, students } from "./schema.ts";
+import { paymentEvents, payments, studentAccounts, students } from "./schema.ts";
 
 const DEMO_STUDENT = { name: "Alex Student", studentNumber: "u7654321" };
 const DEMO_ACCOUNT = {
@@ -26,4 +26,15 @@ export function insertDemoAccount(db: BetterSQLite3Database): void {
 export function ensureSeeded(db: BetterSQLite3Database): void {
   const hasStudents = db.select().from(students).limit(1).all().length > 0;
   if (!hasStudents) insertDemoAccount(db);
+}
+
+/** Wipes every payment and restores the untouched demo account, atomically. */
+export function resetDemo(db: BetterSQLite3Database): void {
+  db.transaction((tx) => {
+    tx.delete(paymentEvents).run();
+    tx.delete(payments).run();
+    tx.delete(studentAccounts).run();
+    tx.delete(students).run();
+    insertDemoAccount(tx as unknown as BetterSQLite3Database);
+  });
 }

@@ -67,3 +67,25 @@ const actions = payment ? availableActions(payment.status, DEMO_ACTIONS) : [];
     }
   </div>
 </div>
+
+<form class="demo-reset" method="post" action="/api/demo/reset" data-confirm-reset>
+  <p>Start over: deletes every payment and restores the {"$18,240.00"} balance.</p>
+  <button class="demo-btn demo-reset-btn" data-loading-label="Resetting…">
+    <span class="btn-label">Reset demo</span>
+  </button>
+</form>
+
+<script>
+  // Guard against a mis-click mid-Crit wiping the flow you're presenting.
+  document.addEventListener(
+    "submit",
+    (event) => {
+      const form = event.target as HTMLFormElement;
+      if (form.matches("[data-confirm-reset]") && !confirm("Reset the demo? All payments will be deleted.")) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    },
+    true,
+  );
+</script>

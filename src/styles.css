@@ -1711,6 +1711,40 @@ form {
   background: #9a2a22;
 }
 
+.demo-reset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  padding: 0.8rem 1.1rem;
+  border: 1px dashed var(--d-line);
+  border-radius: var(--r-sm);
+  font-size: 0.8rem;
+  color: var(--d-muted);
+}
+
+.demo-reset p {
+  flex: 1 1 14rem;
+}
+
+.demo-reset-btn {
+  width: auto;
+  background: transparent;
+  border-color: rgb(255 255 255 / 0.3);
+  text-align: center;
+}
+
+.demo-reset-btn:hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.devpanel .demo-reset {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+}
+
 .devpanel {
   position: fixed;
   right: 1rem;
